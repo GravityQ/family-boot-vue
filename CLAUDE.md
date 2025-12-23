@@ -168,9 +168,6 @@ Infrastructure capabilities:
 
 ## Important Development Notes
 
-### Git Identity
-- 所有与本项目相关的 git 操作统一使用账号邮箱：`312266356@qq.com`。
-
 ### Before Development
 
 1. Identify which module your feature belongs to:
