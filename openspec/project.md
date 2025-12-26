@@ -66,6 +66,26 @@
   - 当前默认形态：`yudao-server` 同时承载管理后台接口与 APP 接口，通过包结构（`controller/admin` 与 `controller/app`）区分。
   - 推荐生产形态（详见 `SERVICE_SPLIT_GUIDE.md`）：拆分为 `yudao-server-admin` 与 `yudao-server-app` 两个独立服务，实现物理隔离、独立部署和独立扩缩容。
   - 在 OpenSpec 相关变更中，如涉及 Server 的结构或部署方式调整，应优先参考该拆分方案并在提案中明确影响范围。
+- **代码生成器模板规范**
+  - 所有代码生成器模板文件必须位于 `yudao-module-infra/src/main/resources/codegen/` 目录下，使用 Velocity 模板引擎（`.vm` 文件扩展名）。
+  - 目录结构按代码类型分类组织：
+    - `java/`：Java 后端代码模板（Controller、Service、Mapper、DO、VO 等）；
+    - `vue/`、`vue3/`、`vue3_vben/` 等：前端代码模板（按不同前端框架分类）；
+    - `sql/`：SQL 脚本模板。
+  - 模板文件命名规范：
+    - 使用小写字母和下划线，文件名应清晰反映生成的代码类型（如 `controller.vm`、`do.vm`、`serviceImpl.vm`、`form.vue.vm` 等）；
+    - 主子表特殊模板使用 `_sub` 后缀（如 `do_sub.vm`、`form_sub_normal.vue.vm`）；
+    - 不同模板类型使用特定后缀区分（如 `_normal`、`_erp`、`_inner` 等）。
+  - 模板语法规范：
+    - 使用 Velocity 标准语法（`${variable}`、`#foreach`、`#if`、`#set` 等）；
+    - 变量绑定通过 `CodegenEngine` 的 `bindingMap` 提供（如 `table`、`columns`、`basePackage`、`sceneEnum` 等）；
+    - 模板中应包含必要的 import 语句生成逻辑，避免硬编码包路径；
+    - 特殊场景（树表、主子表）使用条件判断（`#if`）控制生成逻辑。
+  - 代码格式规范：
+    - 生成的代码应符合项目编码规范（遵循《阿里巴巴 Java 开发手册》及项目约定）；
+    - 模板中应包含必要的注释和 JavaDoc，使用 `${table.author}` 等变量填充作者信息；
+    - 生成的代码应通过 `CodegenEngine.prettyCode()` 方法进行格式化处理，确保符合前端代码格式校验要求。
+  - 新增或修改模板文件时，需同步更新 `CodegenEngine` 中的模板路径映射（`SERVER_TEMPLATES` 或 `FRONT_TEMPLATES`），确保模板能被正确识别和加载。
 
 ### Testing Strategy
 - **项目既有测试约定**
