@@ -1,7 +1,7 @@
 package cn.iocoder.yudao.module.family.service.audit;
 
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
-import cn.iocoder.yudao.framework.security.core.util.SecurityUtils;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.family.controller.admin.audit.vo.AuditApproveReqVO;
 import cn.iocoder.yudao.module.family.controller.admin.audit.vo.AuditPageReqVO;
@@ -72,8 +72,8 @@ public class AuditServiceImplTest extends BaseDbUnitTest {
         auditLogMapper.insert(auditLog);
 
         // mock 当前登录用户（家族管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             PageResult<AuditRespVO> pageResult = auditService.getAuditPage(pageReqVO);
@@ -115,8 +115,8 @@ public class AuditServiceImplTest extends BaseDbUnitTest {
         auditLogMapper.insert(auditLog);
 
         // mock 当前登录用户（家族管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             auditService.approveAudit(approveReqVO);
@@ -160,8 +160,8 @@ public class AuditServiceImplTest extends BaseDbUnitTest {
         auditLogMapper.insert(auditLog);
 
         // mock 当前登录用户（家族管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             auditService.rejectAudit(rejectReqVO);
@@ -205,8 +205,8 @@ public class AuditServiceImplTest extends BaseDbUnitTest {
         auditLogMapper.insert(auditLog);
 
         // mock 当前登录用户（不是家族管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用，并断言异常
             assertServiceException(() -> auditService.approveAudit(approveReqVO), AUDIT_LOG_NOT_FAMILY_ADMIN);

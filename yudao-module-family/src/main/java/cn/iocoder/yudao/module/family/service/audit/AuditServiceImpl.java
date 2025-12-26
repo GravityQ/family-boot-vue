@@ -3,7 +3,7 @@ package cn.iocoder.yudao.module.family.service.audit;
 import cn.hutool.json.JSONUtil;
 import cn.iocoder.yudao.framework.common.pojo.PageResult;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.framework.security.core.util.SecurityUtils;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.family.controller.admin.audit.vo.AuditApproveReqVO;
 import cn.iocoder.yudao.module.family.controller.admin.audit.vo.AuditPageReqVO;
 import cn.iocoder.yudao.module.family.controller.admin.audit.vo.AuditRejectReqVO;
@@ -55,7 +55,7 @@ public class AuditServiceImpl implements AuditService {
         }
 
         // 校验当前用户是否是家族管理员
-        Long currentUserId = SecurityUtils.getLoginUserId();
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
         if (!family.getCreatorId().equals(currentUserId)) {
             throw exception(FAMILY_NOT_ADMIN);
         }
@@ -64,8 +64,7 @@ public class AuditServiceImpl implements AuditService {
         PageResult<AuditLogDO> pageResult = auditLogMapper.selectPageByFamilyIdAndStatus(
                 pageReqVO.getFamilyId(),
                 pageReqVO.getAuditStatus(),
-                pageReqVO.getPageNo(),
-                pageReqVO.getPageSize()
+                pageReqVO
         );
 
         // 转换为VO
@@ -91,7 +90,7 @@ public class AuditServiceImpl implements AuditService {
 
         // 校验当前用户是否是家族管理员
         FamilyDO family = familyMapper.selectById(auditLog.getFamilyId());
-        Long currentUserId = SecurityUtils.getLoginUserId();
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
         if (!family.getCreatorId().equals(currentUserId)) {
             throw exception(AUDIT_LOG_NOT_FAMILY_ADMIN);
         }
@@ -156,7 +155,7 @@ public class AuditServiceImpl implements AuditService {
 
         // 校验当前用户是否是家族管理员
         FamilyDO family = familyMapper.selectById(auditLog.getFamilyId());
-        Long currentUserId = SecurityUtils.getLoginUserId();
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
         if (!family.getCreatorId().equals(currentUserId)) {
             throw exception(AUDIT_LOG_NOT_FAMILY_ADMIN);
         }

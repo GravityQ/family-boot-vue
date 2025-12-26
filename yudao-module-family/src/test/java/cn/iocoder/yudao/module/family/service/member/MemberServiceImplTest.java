@@ -1,6 +1,6 @@
 package cn.iocoder.yudao.module.family.service.member;
 
-import cn.iocoder.yudao.framework.security.core.util.SecurityUtils;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberApplyCreateReqVO;
 import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberApplyUpdateReqVO;
@@ -77,8 +77,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         memberMapper.insert(childMember);
 
         // mock 当前登录用户（已加入家族）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             MemberTreeRespVO tree = memberService.getMemberTree(familyId);
@@ -106,8 +106,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户（未加入家族）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用，并断言异常
             assertServiceException(() -> memberService.getMemberTree(familyId), FAMILY_NOT_MEMBER);
@@ -138,8 +138,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         memberMapper.insert(member);
 
         // mock 当前登录用户（已加入家族）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             MemberDetailRespVO detail = memberService.getMember(memberId);
@@ -170,8 +170,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户（已加入家族）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             Long auditLogId = memberService.applyCreateMember(createReqVO);
@@ -217,8 +217,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         memberMapper.insert(member);
 
         // mock 当前登录用户（已加入家族）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             Long auditLogId = memberService.applyUpdateMember(updateReqVO);
@@ -255,8 +255,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户（家族管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             Long memberId = memberService.createMember(createReqVO);
@@ -299,8 +299,8 @@ public class MemberServiceImplTest extends BaseDbUnitTest {
         memberMapper.insert(child);
 
         // mock 当前登录用户（家族管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用，并断言异常
             assertServiceException(() -> memberService.deleteMember(memberId), MEMBER_HAS_CHILDREN);

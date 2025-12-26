@@ -1,6 +1,6 @@
 package cn.iocoder.yudao.module.family.service.family;
 
-import cn.iocoder.yudao.framework.security.core.util.SecurityUtils;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.framework.test.core.ut.BaseDbUnitTest;
 import cn.iocoder.yudao.module.family.controller.app.family.vo.FamilyCreateReqVO;
 import cn.iocoder.yudao.module.family.controller.app.family.vo.FamilyRespVO;
@@ -35,8 +35,6 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
     @Resource
     private FamilyMapper familyMapper;
 
-    @MockitoBean
-    private SecurityUtils securityUtils;
 
     @Test
     public void testCreateFamily_success() {
@@ -48,8 +46,8 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
         });
 
         // mock 当前登录用户
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             Long familyId = familyService.createFamily(createReqVO);
@@ -81,8 +79,8 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(existingFamily);
 
         // mock 当前登录用户
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用，并断言异常
             assertServiceException(() -> familyService.createFamily(createReqVO), FAMILY_NAME_DUPLICATE);
@@ -107,8 +105,8 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户（系统管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(999L); // 系统管理员ID
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(999L); // 系统管理员ID
 
             // 调用
             familyService.approveFamilyCreate(auditReqVO);
@@ -139,8 +137,8 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户（系统管理员）
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(999L); // 系统管理员ID
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(999L); // 系统管理员ID
 
             // 调用
             familyService.rejectFamilyCreate(auditReqVO);
@@ -172,8 +170,8 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用
             familyService.updateFamily(updateReqVO);
@@ -205,8 +203,8 @@ public class FamilyServiceImplTest extends BaseDbUnitTest {
         familyMapper.insert(family);
 
         // mock 当前登录用户
-        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityUtils.class)) {
-            mockedStatic.when(SecurityUtils::getLoginUserId).thenReturn(userId);
+        try (var mockedStatic = org.mockito.Mockito.mockStatic(SecurityFrameworkUtils.class)) {
+            mockedStatic.when(SecurityFrameworkUtils::getLoginUserId).thenReturn(userId);
 
             // 调用，并断言异常
             assertServiceException(() -> familyService.updateFamily(updateReqVO), FAMILY_NOT_ADMIN);

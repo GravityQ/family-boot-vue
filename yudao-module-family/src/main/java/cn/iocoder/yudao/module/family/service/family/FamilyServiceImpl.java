@@ -1,13 +1,15 @@
 package cn.iocoder.yudao.module.family.service.family;
 
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.framework.security.core.util.SecurityUtils;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.family.controller.app.family.vo.FamilyCreateReqVO;
 import cn.iocoder.yudao.module.family.controller.app.family.vo.FamilyRespVO;
 import cn.iocoder.yudao.module.family.controller.app.family.vo.FamilyUpdateReqVO;
 import cn.iocoder.yudao.module.family.controller.admin.family.vo.FamilyAuditReqVO;
+import cn.iocoder.yudao.module.family.convert.family.FamilyConvert;
 import cn.iocoder.yudao.module.family.dal.dataobject.family.FamilyDO;
 import cn.iocoder.yudao.module.family.dal.mysql.family.FamilyMapper;
+import cn.iocoder.yudao.module.family.dal.mysql.familymember.FamilyMemberMapper;
 import cn.iocoder.yudao.module.family.enums.FamilyStatusEnum;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDateTime;
 
 import static cn.iocoder.yudao.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.iocoder.yudao.module.family.enums.ErrorCodeConstants.*;
@@ -32,6 +33,8 @@ public class FamilyServiceImpl implements FamilyService {
 
     @Resource
     private FamilyMapper familyMapper;
+    @Resource
+    private FamilyMemberMapper familyMemberMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -44,7 +47,7 @@ public class FamilyServiceImpl implements FamilyService {
 
         // 插入家族记录
         FamilyDO family = BeanUtils.toBean(createReqVO, FamilyDO.class);
-        family.setCreatorId(SecurityUtils.getLoginUserId());
+        family.setCreatorId(SecurityFrameworkUtils.getLoginUserId());
         family.setStatus(FamilyStatusEnum.PENDING.getStatus());
         family.setPrivacyLevel(0); // 默认公开
         familyMapper.insert(family);
@@ -58,10 +61,11 @@ public class FamilyServiceImpl implements FamilyService {
             throw exception(FAMILY_NOT_EXISTS);
         }
 
-        FamilyRespVO respVO = BeanUtils.toBean(family, FamilyRespVO.class);
-        // TODO: 判断当前用户是否是家族成员（后续实现）
-        respVO.setIsMember(false);
-        return respVO;
+        // 判断当前用户是否是家族成员
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
+        Boolean isMember = isFamilyMember(id, currentUserId);
+        // 使用 Convert 进行转换和脱敏
+        return FamilyConvert.INSTANCE.convert(family, isMember);
     }
 
     @Override
@@ -74,7 +78,7 @@ public class FamilyServiceImpl implements FamilyService {
         }
 
         // 校验当前用户是否是家族管理员
-        Long currentUserId = SecurityUtils.getLoginUserId();
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
         if (!family.getCreatorId().equals(currentUserId)) {
             throw exception(FAMILY_NOT_ADMIN);
         }
@@ -124,6 +128,22 @@ public class FamilyServiceImpl implements FamilyService {
         updateObj.setId(auditReqVO.getId());
         updateObj.setStatus(FamilyStatusEnum.REJECTED.getStatus());
         familyMapper.updateById(updateObj);
+    }
+
+    /**
+     * 判断用户是否是家族成员
+     */
+    private boolean isFamilyMember(Long familyId, Long userId) {
+        if (familyId == null || userId == null) {
+            return false;
+        }
+        // 先查询家族成员关系表
+        if (familyMemberMapper.existsByFamilyIdAndUserId(familyId, userId)) {
+            return true;
+        }
+        // 如果是家族创建者，也认为是成员
+        FamilyDO family = familyMapper.selectById(familyId);
+        return family != null && family.getCreatorId().equals(userId);
     }
 
 }

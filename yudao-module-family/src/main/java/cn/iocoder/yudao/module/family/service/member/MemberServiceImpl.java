@@ -3,24 +3,25 @@ package cn.iocoder.yudao.module.family.service.member;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.iocoder.yudao.framework.common.util.object.BeanUtils;
-import cn.iocoder.yudao.framework.security.core.util.SecurityUtils;
+import cn.iocoder.yudao.framework.security.core.util.SecurityFrameworkUtils;
 import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberApplyCreateReqVO;
 import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberApplyUpdateReqVO;
 import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberDetailRespVO;
 import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberTreeRespVO;
 import cn.iocoder.yudao.module.family.controller.admin.member.vo.MemberCreateReqVO;
+import cn.iocoder.yudao.module.family.convert.member.MemberConvert;
 import cn.iocoder.yudao.module.family.dal.dataobject.audit.AuditLogDO;
 import cn.iocoder.yudao.module.family.dal.dataobject.family.FamilyDO;
 import cn.iocoder.yudao.module.family.dal.dataobject.familyunit.FamilyUnitDO;
 import cn.iocoder.yudao.module.family.dal.dataobject.member.MemberDO;
 import cn.iocoder.yudao.module.family.dal.mysql.audit.AuditLogMapper;
 import cn.iocoder.yudao.module.family.dal.mysql.family.FamilyMapper;
+import cn.iocoder.yudao.module.family.dal.mysql.familymember.FamilyMemberMapper;
 import cn.iocoder.yudao.module.family.dal.mysql.familyunit.FamilyUnitMapper;
 import cn.iocoder.yudao.module.family.dal.mysql.member.MemberMapper;
 import cn.iocoder.yudao.module.family.enums.AuditEntityTypeEnum;
 import cn.iocoder.yudao.module.family.enums.AuditOperationTypeEnum;
 import cn.iocoder.yudao.module.family.enums.AuditStatusEnum;
-import cn.iocoder.yudao.module.family.enums.FamilyStatusEnum;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,8 @@ public class MemberServiceImpl implements MemberService {
     private FamilyUnitMapper familyUnitMapper;
     @Resource
     private AuditLogMapper auditLogMapper;
+    @Resource
+    private FamilyMemberMapper familyMemberMapper;
 
     @Override
     public MemberTreeRespVO getMemberTree(Long familyId) {
@@ -60,9 +63,8 @@ public class MemberServiceImpl implements MemberService {
             throw exception(FAMILY_NOT_EXISTS);
         }
 
-        // TODO: 校验当前用户是否是家族成员（后续实现）
-        // 暂时先检查隐私等级
-        Long currentUserId = SecurityUtils.getLoginUserId();
+        // 校验当前用户是否是家族成员
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
         if (family.getPrivacyLevel() == 1 && !isFamilyMember(familyId, currentUserId)) {
             throw exception(FAMILY_NOT_MEMBER);
         }
@@ -81,6 +83,38 @@ public class MemberServiceImpl implements MemberService {
                 .findFirst()
                 .orElse(members.get(0)); // 如果没有根节点，使用第一个成员
 
+        // 查询所有家庭单元，用于构建配偶和子女关系
+        List<FamilyUnitDO> familyUnits = familyUnitMapper.selectList("family_id", familyId);
+        
+        // 构建成员ID到配偶ID列表的映射
+        Map<Long, List<Long>> spouseMap = new HashMap<>();
+        for (FamilyUnitDO unit : familyUnits) {
+            if (unit.getHusbandId() != null && unit.getWifeId() != null) {
+                spouseMap.computeIfAbsent(unit.getHusbandId(), k -> new ArrayList<>()).add(unit.getWifeId());
+                spouseMap.computeIfAbsent(unit.getWifeId(), k -> new ArrayList<>()).add(unit.getHusbandId());
+            }
+        }
+        
+        // 构建成员ID到子女ID列表的映射
+        Map<Long, List<Long>> childrenMap = new HashMap<>();
+        for (MemberDO member : members) {
+            if (member.getParentFamilyUnitId() != null) {
+                // 找到该成员所属的家庭单元
+                FamilyUnitDO unit = familyUnits.stream()
+                        .filter(u -> u.getId().equals(member.getParentFamilyUnitId()))
+                        .findFirst()
+                        .orElse(null);
+                if (unit != null) {
+                    if (unit.getHusbandId() != null) {
+                        childrenMap.computeIfAbsent(unit.getHusbandId(), k -> new ArrayList<>()).add(member.getId());
+                    }
+                    if (unit.getWifeId() != null) {
+                        childrenMap.computeIfAbsent(unit.getWifeId(), k -> new ArrayList<>()).add(member.getId());
+                    }
+                }
+            }
+        }
+
         // 构建扁平节点列表
         List<MemberTreeRespVO.MemberNodeVO> nodes = members.stream()
                 .map(member -> {
@@ -90,9 +124,10 @@ public class MemberServiceImpl implements MemberService {
                     node.setGender(member.getGender());
                     node.setFatherId(member.getFatherId());
                     node.setMotherId(member.getMotherId());
-                    // TODO: 填充spouseIds和childrenIds（后续实现）
-                    node.setSpouseIds(Collections.emptyList());
-                    node.setChildrenIds(Collections.emptyList());
+                    // 填充配偶ID列表
+                    node.setSpouseIds(spouseMap.getOrDefault(member.getId(), Collections.emptyList()));
+                    // 填充子女ID列表
+                    node.setChildrenIds(childrenMap.getOrDefault(member.getId(), Collections.emptyList()));
                     return node;
                 })
                 .collect(Collectors.toList());
@@ -113,15 +148,48 @@ public class MemberServiceImpl implements MemberService {
 
         // TODO: 校验当前用户是否是家族成员（后续实现）
         FamilyDO family = familyMapper.selectById(member.getFamilyId());
-        Long currentUserId = SecurityUtils.getLoginUserId();
-        if (family.getPrivacyLevel() == 1 && !isFamilyMember(member.getFamilyId(), currentUserId)) {
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
+        Boolean isMember = isFamilyMember(member.getFamilyId(), currentUserId);
+        if (family.getPrivacyLevel() == 1 && !isMember) {
             throw exception(FAMILY_NOT_MEMBER);
         }
 
-        MemberDetailRespVO respVO = BeanUtils.toBean(member, MemberDetailRespVO.class);
-        // TODO: 填充spouseIds和childrenIds（后续实现）
-        respVO.setSpouseIds(Collections.emptyList());
-        respVO.setChildrenIds(Collections.emptyList());
+        // 使用 Convert 进行转换和脱敏
+        MemberDetailRespVO respVO = MemberConvert.INSTANCE.convert(member, isMember);
+        
+        // 查询配偶关系
+        List<Long> spouseIds = new ArrayList<>();
+        // 查询作为丈夫的家庭单元
+        List<FamilyUnitDO> unitsAsHusband = familyUnitMapper.selectListByHusbandId(id);
+        for (FamilyUnitDO unit : unitsAsHusband) {
+            if (unit.getWifeId() != null) {
+                spouseIds.add(unit.getWifeId());
+            }
+        }
+        // 查询作为妻子的家庭单元
+        List<FamilyUnitDO> unitsAsWife = familyUnitMapper.selectListByWifeId(id);
+        for (FamilyUnitDO unit : unitsAsWife) {
+            if (unit.getHusbandId() != null) {
+                spouseIds.add(unit.getHusbandId());
+            }
+        }
+        respVO.setSpouseIds(spouseIds);
+        
+        // 查询子女关系：找到所有以该成员为父母之一的家庭单元
+        List<FamilyUnitDO> allUnits = familyUnitMapper.selectList("family_id", member.getFamilyId());
+        List<Long> childrenIds = new ArrayList<>();
+        for (FamilyUnitDO unit : allUnits) {
+            if ((unit.getHusbandId() != null && unit.getHusbandId().equals(id)) ||
+                (unit.getWifeId() != null && unit.getWifeId().equals(id))) {
+                // 找到该家庭单元的所有子女
+                List<MemberDO> unitChildren = memberMapper.selectListByFamilyUnitId(unit.getId());
+                for (MemberDO child : unitChildren) {
+                    childrenIds.add(child.getId());
+                }
+            }
+        }
+        respVO.setChildrenIds(childrenIds);
+        
         return respVO;
     }
 
@@ -139,7 +207,7 @@ public class MemberServiceImpl implements MemberService {
         // 创建审核记录
         AuditLogDO auditLog = new AuditLogDO();
         auditLog.setFamilyId(createReqVO.getFamilyId());
-        auditLog.setApplicantId(SecurityUtils.getLoginUserId());
+        auditLog.setApplicantId(SecurityFrameworkUtils.getLoginUserId());
         auditLog.setEntityType(AuditEntityTypeEnum.MEMBER.getType());
         auditLog.setEntityId(null); // 新增时为空
         auditLog.setOperationType(AuditOperationTypeEnum.CREATE.getType());
@@ -174,7 +242,7 @@ public class MemberServiceImpl implements MemberService {
         // 创建审核记录
         AuditLogDO auditLog = new AuditLogDO();
         auditLog.setFamilyId(member.getFamilyId());
-        auditLog.setApplicantId(SecurityUtils.getLoginUserId());
+        auditLog.setApplicantId(SecurityFrameworkUtils.getLoginUserId());
         auditLog.setEntityType(AuditEntityTypeEnum.MEMBER.getType());
         auditLog.setEntityId(updateReqVO.getId());
         auditLog.setOperationType(AuditOperationTypeEnum.UPDATE.getType());
@@ -195,7 +263,7 @@ public class MemberServiceImpl implements MemberService {
         }
 
         // 校验当前用户是否是家族管理员
-        Long currentUserId = SecurityUtils.getLoginUserId();
+        Long currentUserId = SecurityFrameworkUtils.getLoginUserId();
         if (!family.getCreatorId().equals(currentUserId)) {
             throw exception(FAMILY_NOT_ADMIN);
         }
@@ -227,10 +295,16 @@ public class MemberServiceImpl implements MemberService {
 
     /**
      * 判断用户是否是家族成员
-     * TODO: 后续实现家族成员关系表后，完善此方法
      */
     private boolean isFamilyMember(Long familyId, Long userId) {
-        // 暂时简单判断：如果是家族创建者，则认为是成员
+        if (familyId == null || userId == null) {
+            return false;
+        }
+        // 先查询家族成员关系表
+        if (familyMemberMapper.existsByFamilyIdAndUserId(familyId, userId)) {
+            return true;
+        }
+        // 如果是家族创建者，也认为是成员
         FamilyDO family = familyMapper.selectById(familyId);
         return family != null && family.getCreatorId().equals(userId);
     }
