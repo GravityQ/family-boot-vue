@@ -39,7 +39,7 @@ import static cn.iocoder.yudao.module.family.enums.ErrorCodeConstants.*;
  *
  * @author 芋道源码
  */
-@Service
+@Service("familyMemberServiceImpl")
 @Validated
 @Slf4j
 public class MemberServiceImpl implements MemberService {

@@ -22,27 +22,27 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
  */
 @Tag(name = "用户 App - 家族")
 @RestController
-@RequestMapping("/app-api/family/v1")
+@RequestMapping("/family/v1")
 @Validated
 public class AppFamilyController {
 
     @Resource
     private FamilyService familyService;
 
-    @PostMapping("/family/create")
+    @PostMapping("/create")
     @Operation(summary = "创建家族申请")
     public CommonResult<Long> createFamily(@Valid @RequestBody FamilyCreateReqVO createReqVO) {
         return success(familyService.createFamily(createReqVO));
     }
 
-    @GetMapping("/family/get")
+    @GetMapping("/get")
     @Operation(summary = "获取家族详情")
     @Parameter(name = "id", description = "家族编号", required = true, example = "1")
     public CommonResult<FamilyRespVO> getFamily(@RequestParam("id") Long id) {
         return success(familyService.getFamily(id));
     }
 
-    @PutMapping("/family/update")
+    @PutMapping("/update")
     @Operation(summary = "更新家族设置")
     public CommonResult<Boolean> updateFamily(@Valid @RequestBody FamilyUpdateReqVO updateReqVO) {
         familyService.updateFamily(updateReqVO);

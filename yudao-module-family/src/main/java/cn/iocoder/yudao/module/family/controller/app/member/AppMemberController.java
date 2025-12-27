@@ -23,7 +23,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
  */
 @Tag(name = "用户 App - 成员")
 @RestController
-@RequestMapping("/app-api/family/v1/member")
+@RequestMapping("/family/v1/member")
 @Validated
 public class AppMemberController {
 

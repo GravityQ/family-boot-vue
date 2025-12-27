@@ -20,7 +20,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
  */
 @Tag(name = "管理后台 - 家族")
 @RestController
-@RequestMapping("/admin-api/family")
+@RequestMapping("/family/family")
 @Validated
 public class AdminFamilyController {
 

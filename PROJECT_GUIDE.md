@@ -96,7 +96,22 @@
     ```
     或者直接运行 `yudao-server/target/yudao-server.jar`。
 
-## 5. 常见问题
+## 5. 项目开发规则
+
+### 5.1 运行环境配置
+**规则**: 运行和debug时均必须指定dev环境。
+
+**说明**: 
+- 在IDE中运行或调试应用时，必须通过VM options或环境变量指定 `spring.profiles.active=dev`
+- 这确保开发环境使用正确的配置文件（`application-dev.yaml`）
+- 避免因环境配置错误导致的开发问题
+
+**配置方式**:
+- **IntelliJ IDEA**: Run/Debug Configuration → VM options: `-Dspring.profiles.active=dev`
+- **命令行**: `mvn spring-boot:run -Dspring-boot.run.profiles=dev`
+- **环境变量**: `SPRING_PROFILES_ACTIVE=dev`
+
+## 6. 常见问题
 *   **依赖下载失败**: 建议配置阿里云 Maven 镜像，配置在 `pom.xml` 中已包含。
 *   **Lombok 报错**: 确保 IDE 已安装 Lombok 插件并启用注解处理。
 

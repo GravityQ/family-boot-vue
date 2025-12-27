@@ -24,7 +24,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
  */
 @Tag(name = "管理后台 - 审核")
 @RestController
-@RequestMapping("/admin-api/family/audit")
+@RequestMapping("/family/audit")
 @Validated
 public class AdminAuditController {
 

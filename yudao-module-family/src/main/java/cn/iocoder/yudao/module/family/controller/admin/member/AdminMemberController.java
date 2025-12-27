@@ -2,6 +2,7 @@ package cn.iocoder.yudao.module.family.controller.admin.member;
 
 import cn.iocoder.yudao.framework.common.pojo.CommonResult;
 import cn.iocoder.yudao.module.family.controller.admin.member.vo.MemberCreateReqVO;
+import cn.iocoder.yudao.module.family.controller.app.member.vo.MemberDetailRespVO;
 import cn.iocoder.yudao.module.family.service.member.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,7 +22,7 @@ import static cn.iocoder.yudao.framework.common.pojo.CommonResult.success;
  */
 @Tag(name = "管理后台 - 成员")
 @RestController
-@RequestMapping("/admin-api/family/member")
+@RequestMapping("/family/member")
 @Validated
 public class AdminMemberController {
 
@@ -33,6 +34,14 @@ public class AdminMemberController {
     @PreAuthorize("@ss.hasPermission('family:member:create')")
     public CommonResult<Long> createMember(@Valid @RequestBody MemberCreateReqVO createReqVO) {
         return success(memberService.createMember(createReqVO));
+    }
+
+    @GetMapping("/get")
+    @Operation(summary = "获得成员")
+    @Parameter(name = "id", description = "成员编号", required = true, example = "1")
+    @PreAuthorize("@ss.hasPermission('family:member:query')")
+    public CommonResult<MemberDetailRespVO> getMember(@RequestParam("id") Long id) {
+        return success(memberService.getMember(id));
     }
 
     @DeleteMapping("/delete")
