@@ -164,7 +164,8 @@ spring:
 # 日志文件配置
 logging:
   file:
-    name: ${user.home}/logs/${spring.application.name}.log # 日志文件名，全路径
+    # prod 环境：日志写入到当前工作目录下的 logs 目录，例如项目根目录的 logs/yudao-server.log
+    name: ${user.dir}/logs/${spring.application.name}.log # 日志文件名，全路径
   level:
     # 配置自己写的 MyBatis Mapper 打印日志
     cn.iocoder.yudao.module.bpm.dal.mysql: debug

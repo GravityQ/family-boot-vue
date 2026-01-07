@@ -12,83 +12,93 @@
         </encoder>
     </appender>
 
-    <!-- INFO 级别日志文件 Appender（包含 INFO、WARN，但不包含 ERROR） -->
-    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-        </encoder>
-        <!-- 日志文件名 -->
-        <file>${LOG_FILE:-logs/application.log}</file>
-        <!-- 只记录 INFO 和 WARN 级别的日志，ERROR 级别不记录到此文件 -->
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>DENY</onMatch>
-        </filter>
-        <!-- 滚动策略：基于【每天 + 大小】创建日志文件 -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_FILE:-logs/application.log}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxHistory>30</maxHistory> <!-- 日志文件的保留天数 -->
-            <maxFileSize>10MB</maxFileSize> <!-- 日志文件，到达多少容量，进行滚动 -->
-            <totalSizeCap>3GB</totalSizeCap> <!-- 所有日志文件的总大小限制 -->
-        </rollingPolicy>
-    </appender>
+    <!-- dev 环境：只输出控制台日志，不写入任何文件 -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+        </root>
+    </springProfile>
 
-    <!-- ERROR 级别日志文件 Appender（只记录 ERROR 级别） -->
-    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-        </encoder>
-        <!-- 错误日志文件名：在原始日志文件名基础上添加 .error -->
-        <file>${LOG_FILE:-logs/application.log}.error</file>
-        <!-- 只记录 ERROR 级别的日志 -->
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
-        <!-- 滚动策略：基于【每天 + 大小】创建日志文件 -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_FILE:-logs/application.log}.error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxHistory>90</maxHistory> <!-- 错误日志保留更长时间，90天 -->
-            <maxFileSize>10MB</maxFileSize>
-            <totalSizeCap>1GB</totalSizeCap> <!-- 错误日志总大小限制 -->
-        </rollingPolicy>
-    </appender>
+    <!-- prod 环境：开启文件日志（INFO/WARN + ERROR 分文件、异步、滚动策略） -->
+    <springProfile name="prod">
+        <!-- INFO 级别日志文件 Appender（包含 INFO、WARN，但不包含 ERROR） -->
+        <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>${FILE_LOG_PATTERN}</pattern>
+            </encoder>
+            <!-- 日志文件名 -->
+            <file>${LOG_FILE:-logs/application.log}</file>
+            <!-- 只记录 INFO 和 WARN 级别的日志，ERROR 级别不记录到此文件 -->
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>INFO</level>
+            </filter>
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>ERROR</level>
+                <onMatch>DENY</onMatch>
+            </filter>
+            <!-- 滚动策略：基于【每天 + 大小】创建日志文件 -->
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_FILE:-logs/application.log}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <maxHistory>30</maxHistory> <!-- 日志文件的保留天数 -->
+                <maxFileSize>10MB</maxFileSize> <!-- 日志文件，到达多少容量，进行滚动 -->
+                <totalSizeCap>3GB</totalSizeCap> <!-- 所有日志文件的总大小限制 -->
+            </rollingPolicy>
+        </appender>
 
-    <!-- 异步写入 INFO 日志，提升性能 -->
-    <appender name="ASYNC_INFO" class="ch.qos.logback.classic.AsyncAppender">
-        <discardingThreshold>0</discardingThreshold> <!-- 不丢失日志。默认的，如果队列的 80% 已满,则会丢弃 TRACT、DEBUG、INFO 级别的日志 -->
-        <queueSize>512</queueSize> <!-- 更改默认的队列的深度，该值会影响性能。默认值为 256 -->
-        <appender-ref ref="FILE_INFO"/>
-    </appender>
+        <!-- ERROR 级别日志文件 Appender（只记录 ERROR 级别） -->
+        <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>${FILE_LOG_PATTERN}</pattern>
+            </encoder>
+            <!-- 错误日志文件名：在原始日志文件名基础上添加 .error -->
+            <file>${LOG_FILE:-logs/application.log}.error</file>
+            <!-- 只记录 ERROR 级别的日志 -->
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>ERROR</level>
+            </filter>
+            <!-- 滚动策略：基于【每天 + 大小】创建日志文件 -->
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_FILE:-logs/application.log}.error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <maxHistory>90</maxHistory> <!-- 错误日志保留更长时间，90天 -->
+                <maxFileSize>10MB</maxFileSize>
+                <totalSizeCap>1GB</totalSizeCap> <!-- 错误日志总大小限制 -->
+            </rollingPolicy>
+        </appender>
 
-    <!-- 异步写入 ERROR 日志，提升性能 -->
-    <appender name="ASYNC_ERROR" class="ch.qos.logback.classic.AsyncAppender">
-        <discardingThreshold>0</discardingThreshold> <!-- 不丢失任何错误日志 -->
-        <queueSize>256</queueSize> <!-- ERROR 日志量通常较少，队列可以小一些 -->
-        <appender-ref ref="FILE_ERROR"/>
-    </appender>
+        <!-- 异步写入 INFO 日志，提升性能 -->
+        <appender name="ASYNC_INFO" class="ch.qos.logback.classic.AsyncAppender">
+            <discardingThreshold>0</discardingThreshold> <!-- 不丢失日志。默认的，如果队列的 80% 已满,则会丢弃 TRACT、DEBUG、INFO 级别的日志 -->
+            <queueSize>512</queueSize> <!-- 更改默认的队列的深度，该值会影响性能。默认值为 256 -->
+            <appender-ref ref="FILE_INFO"/>
+        </appender>
 
-    <!-- SkyWalking Appender：GRPC 日志收集，实现日志中心 -->
-    <!--
-    <appender name="SKYWALKING" class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.log.GRPCLogClientAppender">
-        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-            <layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.TraceIdPatternLogbackLayout">
-                <pattern>[%tid] ${FILE_LOG_PATTERN}</pattern>
-            </layout>
-        </encoder>
-    </appender>
-    -->
+        <!-- 异步写入 ERROR 日志，提升性能 -->
+        <appender name="ASYNC_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+            <discardingThreshold>0</discardingThreshold> <!-- 不丢失任何错误日志 -->
+            <queueSize>256</queueSize> <!-- ERROR 日志量通常较少，队列可以小一些 -->
+            <appender-ref ref="FILE_ERROR"/>
+        </appender>
 
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-        <!-- INFO 和 WARN 级别日志写入 INFO 文件 -->
-        <appender-ref ref="ASYNC_INFO"/>
-        <!-- ERROR 级别日志写入 ERROR 文件 -->
-        <appender-ref ref="ASYNC_ERROR"/>
-        <!-- 如果想接入【SkyWalking 日志服务】，可以取消注释掉本行 -->
-        <!-- <appender-ref ref="SKYWALKING"/> -->
-    </root>
+        <!-- SkyWalking Appender：GRPC 日志收集，实现日志中心 -->
+        <!--
+        <appender name="SKYWALKING" class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.log.GRPCLogClientAppender">
+            <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+                <layout class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.TraceIdPatternLogbackLayout">
+                    <pattern>[%tid] ${FILE_LOG_PATTERN}</pattern>
+                </layout>
+            </encoder>
+        </appender>
+        -->
+
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+            <!-- INFO 和 WARN 级别日志写入 INFO 文件 -->
+            <appender-ref ref="ASYNC_INFO"/>
+            <!-- ERROR 级别日志写入 ERROR 文件 -->
+            <appender-ref ref="ASYNC_ERROR"/>
+            <!-- 如果想接入【SkyWalking 日志服务】，可以取消注释掉本行 -->
+            <!-- <appender-ref ref="SKYWALKING"/> -->
+        </root>
+    </springProfile>
 
 </configuration>
